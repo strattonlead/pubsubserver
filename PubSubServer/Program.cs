@@ -67,7 +67,7 @@ if (useAuthentication)
             options.SlidingExpiration = slidingExpiration;
             options.Cookie.Name = Environment.GetEnvironmentVariable("COOKIE_NAME");
             options.Cookie.Domain = Environment.GetEnvironmentVariable("DOMAIN");
-            options.Cookie.Path = Environment.GetEnvironmentVariable("PATH");
+            options.Cookie.Path = Environment.GetEnvironmentVariable("COOKIE_PATH");
             options.Cookie.SameSite = sameSiteMode;
             options.Cookie.HttpOnly = httpOnly;
             options.Cookie.SecurePolicy = securePolicyMode;

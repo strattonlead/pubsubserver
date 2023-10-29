@@ -42,7 +42,7 @@ SECURE_POLICY=1
 EXPIRE_TIME_SPAN=1:00:00
 COOKIE_NAME=.myCookie
 DOMAIN=example.com
-PATH=/
+COOKIE_PATH=/
 
 
 ## JWT Authentication (optional) implementation is in progress right now

@@ -1,15 +1,12 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualBasic;
 using PubSubServer.Hubs;
 using PubSubServer.Services;
 using System;
-using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +14,68 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddSignalR();
+
+var applicationName = Environment.GetEnvironmentVariable("APPLICATION_NAME");
+bool.TryParse(Environment.GetEnvironmentVariable("USE_DATABASE"), out var useDatabase);
+bool.TryParse(Environment.GetEnvironmentVariable("USE_DATA_PROTECTION"), out var useDataProtection);
+bool.TryParse(Environment.GetEnvironmentVariable("USE_MSSQL"), out var useMsSql);
+
+if (useDatabase)
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    {
+        if (useMsSql)
+        {
+            var msSqlConnectionString = Environment.GetEnvironmentVariable("MSSQL_CONNECTION_STRING");
+            options.UseSqlServer(msSqlConnectionString);
+        }
+    });
+}
+
+if (useDataProtection)
+{
+    builder.Services.AddDataProtection()
+        .SetApplicationName(applicationName)
+        .PersistKeysToDbContext<ApplicationDbContext>();
+}
+
+
+bool.TryParse(Environment.GetEnvironmentVariable("USE_AUTHENTICATION"), out var useAuthentication);
+if (useAuthentication)
+{
+    var authenticationScheme = Environment.GetEnvironmentVariable("AUTHENTICATION_SCHEME");
+    var authBuilder = builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = authenticationScheme;
+        options.DefaultChallengeScheme = authenticationScheme;
+        options.DefaultScheme = authenticationScheme;
+    });
+
+    bool.TryParse(Environment.GetEnvironmentVariable("USE_COOKIE_AUTHENTICATION"), out var useCookieAuthentication);
+    if (useCookieAuthentication)
+    {
+        authBuilder.AddCookie(authenticationScheme, options =>
+        {
+            bool.TryParse(Environment.GetEnvironmentVariable("SLIDING_EXPIRATION"), out var slidingExpiration);
+            int.TryParse(Environment.GetEnvironmentVariable("SAME_SITE"), out var sameSite);
+            var sameSiteMode = (SameSiteMode)sameSite;
+            bool.TryParse(Environment.GetEnvironmentVariable("HTTP_ONLY"), out var httpOnly);
+            int.TryParse(Environment.GetEnvironmentVariable("SECURE_POLICY"), out var securePolicy);
+            var securePolicyMode = (CookieSecurePolicy)securePolicy;
+            TimeSpan.TryParse(Environment.GetEnvironmentVariable("EXPIRE_TIME_SPAN"), out var expireTimeSpan);
+
+            options.SlidingExpiration = slidingExpiration;
+            options.Cookie.Name = Environment.GetEnvironmentVariable("COOKIE_NAME");
+            options.Cookie.Domain = Environment.GetEnvironmentVariable("DOMAIN");
+            options.Cookie.Path = Environment.GetEnvironmentVariable("PATH");
+            options.Cookie.SameSite = sameSiteMode;
+            options.Cookie.HttpOnly = httpOnly;
+            options.Cookie.SecurePolicy = securePolicyMode;
+            options.ExpireTimeSpan = expireTimeSpan;
+        });
+    }
+}
+
 //builder.Services.AddAuthentication(options =>
 //{
 //    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -56,76 +115,16 @@ builder.Services.AddSignalR();
 //    };
 //});
 
-bool.TryParse(Environment.GetEnvironmentVariable("DISABLE_AUTHENTICATION") ?? "false", out var disableAuthentication);
-
-if (!disableAuthentication)
-{
-    var multiAuthScheme = "MULTI_AUTH_SCHEME";
-    // JwtBearerDefaults.AuthenticationScheme
-    builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultScheme = multiAuthScheme;
-        options.DefaultChallengeScheme = multiAuthScheme;
-    }).AddPolicyScheme(multiAuthScheme, "Multi Auth Scheme", options =>
-    {
-        options.ForwardDefaultSelector = context =>
-        {
-            if (context.Request.Cookies.Any(x => x.Key == Constants.Authentication.PIN_COOKIE_NAME))
-            {
-                return Constants.Authentication.PIN_AUTHENTICATION_SCHEME;
-            }
-
-            return CookieAuthenticationDefaults.AuthenticationScheme;
-        };
-    });
-
-    //.AddJwtBearer("Bearer", options =>
-    //{
-    //    options.Authority = "https://keycloak.createif-ds.de/auth/realms/ds-test";
-    //    options.Audience = "app_client";
-    //    options.RequireHttpsMetadata = false;
-    //    options.TokenValidationParameters = new TokenValidationParameters
-    //    {
-    //        ValidateIssuer = false,
-    //        ValidateAudience = false,
-    //        ValidateLifetime = false,
-    //        ValidateIssuerSigningKey = false,
-    //        ValidIssuer = "https://keycloak.createif-ds.de/auth/realms/ds-test",
-    //        ValidAudience = "app_client",
-    //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("UuPnPrndyI57dKZs0p9vZvXa8dFjeJVu"))
-    //    };
-
-    //    //options.Events = new JwtBearerEvents
-    //    //{
-    //    //    OnMessageReceived = context =>
-    //    //    {
-    //    //        var accessToken = context.Request.Query["access_token"];
-
-    //    //        // If the request is for our hub...
-    //    //        var path = context.HttpContext.Request.Path;
-    //    //        if (!string.IsNullOrEmpty(accessToken) &&
-    //    //            (path.StartsWithSegments("/hubs/chat")))
-    //    //        {
-    //    //            // Read the token out of the query string
-    //    //            context.Token = accessToken;
-    //    //        }
-    //    //        return Task.CompletedTask;
-    //    //    }
-    //    //};
-    //});
-}
-
 
 var app = builder.Build();
 
 app.UseHttpsRedirection();
-if (!disableAuthentication)
+if (useAuthentication)
 {
     app.UseAuthentication();
     app.UseAuthorization();
 }
 
-app.MapGet("/", () => "Hello World!");
 app.MapGet("/public", () => "Public Hello World!")
     .AllowAnonymous();
 app.MapGet("/private", () => "Private Hello World!")
@@ -134,27 +133,35 @@ app.MapGet("/private", () => "Private Hello World!")
 app.MapPost("/tokens/connect", (HttpContext ctx, JwtOptions jwtOptions)
     => TokenEndpoint.Connect(ctx, jwtOptions));
 
-app.MapGet("/", async (ctx) =>
-{
-    var authResult = await ctx.AuthenticateAsync(OpenIdConnectDefaults.AuthenticationScheme);
-    if (authResult?.Succeeded != true)
-    {
+//app.MapGet("/", async (context) =>
+//{
+//    //var authResult = await ctx.AuthenticateAsync(OpenIdConnectDefaults.AuthenticationScheme);
+//    //if (authResult?.Succeeded != true)
+//    //{
 
-    }
+//    //}
 
-    // Get the access token and refresh token
-    var accessToken = authResult.Properties.GetTokenValue("access_token");
-    var refreshToken = authResult.Properties.GetTokenValue("refresh_token");
-});
+//    //// Get the access token and refresh token
+//    //var accessToken = authResult.Properties.GetTokenValue("access_token");
+//    //var refreshToken = authResult.Properties.GetTokenValue("refresh_token");
+//    await context.Response.WriteAsync("PubSubServer running...");
+//});
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.MapHub<PubSubHub>("/pubsub");
-
-app.Run(async (context) =>
+if (useAuthentication)
 {
-    await context.Response.WriteAsync("PubSubServer running...");
-});
+    app.MapHub<PubSubHub>("/pubsub").RequireAuthorization();
+}
+else
+{
+    app.MapHub<PubSubHub>("/pubsub").AllowAnonymous();
+}
+
+//app.Run(async (context) =>
+//{
+//    await context.Response.WriteAsync("PubSubServer running...");
+//});
 
 app.Run();

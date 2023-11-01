@@ -10,7 +10,7 @@ COPY . .
 WORKDIR /src/PubSubServer
 
 FROM build AS publish
-RUN dotnet publish "./PubSubServer/PubSubServer.csproj" -c Release -o /app/publish
+RUN dotnet publish "./PubSubServer.csproj" -c Release -o /app/publish
 
 FROM base AS final
 

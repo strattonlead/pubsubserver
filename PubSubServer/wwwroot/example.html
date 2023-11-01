@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>PubSub Server</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.23/signalr.min.js"></script>
+</head>
+<body>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/pubsub")
+            .configureLogging(signalR.LogLevel.Information)
+            .build();
+
+        ///var hub = connectionBuilder.CreateHubProxy("pubSubHub");
+
+        async function start() {
+            try {
+                await connection.start();
+                console.log("SignalR Connected.");
+            } catch (err) {
+                console.log(err);
+                setTimeout(start, 5000);
+            }
+        };
+
+        connection.onclose(async () => {
+            await start();
+        });
+
+        connection.on("Subscribed", (topic) => {
+            console.log(topic);
+        });
+
+        // Start the connection.
+        start();
+
+        //var pubSubHubProxy = connection.createHubProxy('pubSubHub');
+        //contosoChatHubProxy.server.subscribe("topic", "public");
+    </script>
+</body>
+</html>

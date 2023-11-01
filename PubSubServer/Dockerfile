@@ -13,5 +13,4 @@ FROM base AS final
 
 WORKDIR /app
 COPY --from=publish /app/publish .
-RUN echo $(ls -1 /app)
 ENTRYPOINT ["dotnet", "PubSubServer.dll"]

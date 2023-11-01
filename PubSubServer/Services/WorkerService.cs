@@ -14,7 +14,7 @@ namespace PubSubServer.Services
     {
         #region Properties
 
-        private readonly RedisPubSubService _redisPubSub;
+        private readonly PubSubService _redisPubSub;
         private readonly IHostApplicationLifetime _applicationLifetime;
         private readonly ILogger _logger;
         private readonly IServiceProvider _serviceProvider;
@@ -26,7 +26,7 @@ namespace PubSubServer.Services
         public WorkerService(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
-            _redisPubSub = serviceProvider.GetRequiredService<RedisPubSubService>();
+            _redisPubSub = serviceProvider.GetRequiredService<PubSubService>();
             _applicationLifetime = serviceProvider.GetRequiredService<IHostApplicationLifetime>();
             _logger = serviceProvider.GetRequiredService<ILogger<WorkerService>>();
         }

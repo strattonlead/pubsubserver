@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace PubSubServer.Client
 {
-    public class PubSubClient
+    public class PubSubClient : IPubSubClient
     {
         #region Properties
 
-        private readonly RedisPubSubService _redisPubSub;
+        private readonly PubSubService _redisPubSub;
         private readonly string _channel;
         #endregion
 
@@ -18,7 +18,7 @@ namespace PubSubServer.Client
 
         public PubSubClient(IServiceProvider serviceProvider)
         {
-            _redisPubSub = serviceProvider.GetRequiredService<RedisPubSubService>();
+            _redisPubSub = serviceProvider.GetRequiredService<PubSubService>();
             _channel = _redisPubSub.DefaultChannel;
         }
 
@@ -44,7 +44,7 @@ namespace PubSubServer.Client
     {
         public static void AddPubSubClient(this IServiceCollection services)
         {
-            services.AddSingleton<PubSubClient>();
+            services.AddSingleton<IPubSubClient, PubSubClient>();
         }
     }
 }

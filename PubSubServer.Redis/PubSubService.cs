@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PubSubServer.Redis
 {
-    public class RedisPubSubService : IPubSubService, IDisposable
+    public class PubSubService : IPubSubService, IDisposable
     {
         #region Properties
 
@@ -18,7 +18,7 @@ namespace PubSubServer.Redis
 
         #region Constructor
 
-        public RedisPubSubService()
+        public PubSubService()
         {
             var connectionString = Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
             _connection = ConnectionMultiplexer.Connect(connectionString);

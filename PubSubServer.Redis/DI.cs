@@ -6,7 +6,7 @@ namespace PubSubServer.Redis
     {
         public static void AddRedisPubSubService(this IServiceCollection services)
         {
-            services.AddSingleton<IPubSubService, RedisPubSubService>();
+            services.AddSingleton<IPubSubService, PubSubService>();
         }
     }
 }

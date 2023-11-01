@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 using PubSubServer.Redis;
 using System;
 using System.Threading.Tasks;
@@ -25,7 +26,12 @@ namespace PubSubServer.Client
 
         #region Actions
 
-        public async Task Publish(string topic, string message)
+        public async Task PublishAsync(string topic, object message)
+        {
+            await PublishAsync(topic, JsonConvert.SerializeObject(message));
+        }
+
+        public async Task PublishAsync(string topic, string message)
         {
             await _redisPubSub.PublishAsync(_channel, new PubSubMessage() { Topic = topic, Message = message });
         }

@@ -23,8 +23,12 @@ namespace PubSubServer.Redis
         public PubSubService(IServiceProvider serviceProvider)
         {
             _options = serviceProvider.GetRequiredService<PubSubOptions>();
-            _connection = ConnectionMultiplexer.Connect(_options.ConnectionString);
-            _pubSub = _connection.GetSubscriber();
+            if (!_options.IsActive)
+            {
+                _connection = ConnectionMultiplexer.Connect(_options.ConnectionString);
+                _pubSub = _connection.GetSubscriber();
+            }
+
         }
 
         #endregion
@@ -46,6 +50,11 @@ namespace PubSubServer.Redis
 
         public async Task<long> PublishAsync(string channel, string message, CancellationToken cancellationToken = default)
         {
+            if (_connection == null)
+            {
+                return 0;
+            }
+
             while (!_connection.IsConnected)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
@@ -66,6 +75,11 @@ namespace PubSubServer.Redis
 
         public async Task SubscribeAsync<T>(string channel, Action<T> callback, CancellationToken cancellationToken = default)
         {
+            if (_connection == null)
+            {
+                return;
+            }
+
             while (!_connection.IsConnected)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
@@ -86,6 +100,11 @@ namespace PubSubServer.Redis
 
         public async Task SubscribeAsync(string channel, Action<string> callback, CancellationToken cancellationToken = default)
         {
+            if (_connection == null)
+            {
+                return;
+            }
+
             while (!_connection.IsConnected)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
@@ -105,6 +124,11 @@ namespace PubSubServer.Redis
 
         public async Task UnsubscribeAsync(string channel, CancellationToken cancellationToken = default)
         {
+            if (_connection == null)
+            {
+                return;
+            }
+
             while (!_connection.IsConnected)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
@@ -120,6 +144,11 @@ namespace PubSubServer.Redis
 
         public async Task UnsubscribeAllAsync(CancellationToken cancellationToken = default)
         {
+            if (_connection == null)
+            {
+                return;
+            }
+
             while (!_connection.IsConnected)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);

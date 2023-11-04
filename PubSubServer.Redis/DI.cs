@@ -7,6 +7,12 @@ namespace PubSubServer.Redis
     {
         internal PubSubOptions Options = new PubSubOptions();
 
+        public PubSubOptionsBuilder UseIsActive(bool isActive)
+        {
+            Options.IsActive = isActive;
+            return this;
+        }
+
         public PubSubOptionsBuilder UseConnectionString(string connectionString)
         {
             Options.ConnectionString = connectionString;

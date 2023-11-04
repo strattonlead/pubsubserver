@@ -10,7 +10,7 @@ namespace PubSubServer.Client
     {
         #region Properties
 
-        private readonly PubSubService _redisPubSub;
+        private readonly IPubSubService _redisPubSub;
         private readonly string _channel;
         #endregion
 
@@ -18,7 +18,7 @@ namespace PubSubServer.Client
 
         public PubSubClient(IServiceProvider serviceProvider)
         {
-            _redisPubSub = serviceProvider.GetRequiredService<PubSubService>();
+            _redisPubSub = serviceProvider.GetRequiredService<IPubSubService>();
             _channel = _redisPubSub.DefaultChannel;
         }
 

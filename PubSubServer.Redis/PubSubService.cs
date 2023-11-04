@@ -23,7 +23,7 @@ namespace PubSubServer.Redis
         public PubSubService(IServiceProvider serviceProvider)
         {
             _options = serviceProvider.GetRequiredService<PubSubOptions>();
-            if (!_options.IsActive)
+            if (_options.IsActive)
             {
                 _connection = ConnectionMultiplexer.Connect(_options.ConnectionString);
                 _pubSub = _connection.GetSubscriber();

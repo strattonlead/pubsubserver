@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 using StackExchange.Redis;
 using System;
 using System.Threading;
@@ -10,6 +11,7 @@ namespace PubSubServer.Redis
     {
         #region Properties
 
+        private readonly PubSubOptions _options;
         private readonly ConnectionMultiplexer _connection;
         private readonly ISubscriber _pubSub;
         public bool IsConnected => _connection.IsConnected;
@@ -18,10 +20,10 @@ namespace PubSubServer.Redis
 
         #region Constructor
 
-        public PubSubService()
+        public PubSubService(IServiceProvider serviceProvider)
         {
-            var connectionString = Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
-            _connection = ConnectionMultiplexer.Connect(connectionString);
+            _options = serviceProvider.GetRequiredService<PubSubOptions>();
+            _connection = ConnectionMultiplexer.Connect(_options.ConnectionString);
             _pubSub = _connection.GetSubscriber();
         }
 
@@ -29,7 +31,7 @@ namespace PubSubServer.Redis
 
         #region IPubSubService
 
-        public string DefaultChannel => Environment.GetEnvironmentVariable("REDIS_PUBSUB_CHANNEL") ?? "pubsub";
+        public string DefaultChannel => _options.DefaultChannel;
 
         public async Task<long> PublishAsync(string channel, CancellationToken cancellationToken = default)
         {

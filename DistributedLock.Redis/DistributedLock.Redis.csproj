@@ -14,7 +14,7 @@
 	  <NoWarn>$(NoWarn);CS1591</NoWarn>
 	  <PackageTags>Redis</PackageTags>
 	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
-	  <Description>Redis PubSub Wrapper</Description>
+	  <Description>Redis Distributed Lock Wrapper</Description>
 	  <PackageProjectUrl>https://github.com/strattonlead/pubsubserver</PackageProjectUrl>
 	  <PublishRepositoryUrl>true</PublishRepositoryUrl>
 	  <PrivateRepositoryUrl>https://github.com/strattonlead/pubsubserver.git</PrivateRepositoryUrl>

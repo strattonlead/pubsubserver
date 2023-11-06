@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+	  <PackageId>CreateIf.DistributedLock.Redis</PackageId>
+	  <Version>1.0.5</Version>
+	  <PackageVersion>1.0.5</PackageVersion>
+	  <Authors>Arndt Bieberstein</Authors>
+	  <Company>createIF Labs GmbH</Company>
+	  <EnablePackageValidation>true</EnablePackageValidation>
+	  <GenerateDocumentationFile>True</GenerateDocumentationFile>
+	  <NoWarn>$(NoWarn);CS1591</NoWarn>
+	  <PackageTags>Redis</PackageTags>
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <Description>Redis PubSub Wrapper</Description>
+	  <PackageProjectUrl>https://github.com/strattonlead/pubsubserver</PackageProjectUrl>
+	  <PublishRepositoryUrl>true</PublishRepositoryUrl>
+	  <PrivateRepositoryUrl>https://github.com/strattonlead/pubsubserver.git</PrivateRepositoryUrl>
+	  <PackageIcon>icon.png</PackageIcon>
+	  <RepositoryType>git</RepositoryType>
+	  <PackageReadmeFile>README.md</PackageReadmeFile>
+	  <IncludeSymbols>true</IncludeSymbols>
+	  <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RedLock.net" Version="2.3.2" />
+	  <PackageReference Include="StackExchange.Redis" Version="2.6.122" />
+	  <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+	  </PackageReference>
+  </ItemGroup>
+
+	<ItemGroup>
+		<None Include="icon.png" Pack="true" PackagePath=""/>
+		<None Include="README.md" Pack="true" PackagePath=""/>
+	</ItemGroup>
+</Project>

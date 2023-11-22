@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using PubSubServer.Redis;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PubSubServer.Client
@@ -26,14 +27,48 @@ namespace PubSubServer.Client
 
         #region Actions
 
-        public async Task PublishAsync(string topic, object message)
+        public async Task PublishAsync(string topic, object message, CancellationToken cancellationToken = default)
         {
-            await PublishAsync(topic, JsonConvert.SerializeObject(message));
+            await PublishAsync(topic, JsonConvert.SerializeObject(message), cancellationToken);
         }
 
-        public async Task PublishAsync(string topic, string message)
+        public async Task PublishAsync(string topic, string message, CancellationToken cancellationToken = default)
         {
-            await _redisPubSub.PublishAsync(_channel, new PubSubMessage() { Topic = topic, Message = message });
+            await _redisPubSub.PublishAsync(_channel, new PubSubMessage() { Topic = topic, Message = message }, cancellationToken);
+        }
+
+        public async Task SubscribeAsync(string topic, Action callback, CancellationToken cancellationToken = default)
+        {
+            await _redisPubSub.SubscribeAsync(_channel, (PubSubMessage message) =>
+            {
+                if (message.Topic == topic)
+                {
+                    callback?.Invoke();
+                }
+            }, cancellationToken);
+        }
+
+        public async Task SubscribeAsync<T>(string topic, Action<T> callback, CancellationToken cancellationToken = default)
+        {
+            await _redisPubSub.SubscribeAsync(_channel, (PubSubMessage message) =>
+            {
+                if (message.Topic == topic)
+                {
+                    var payload = JsonConvert.DeserializeObject<T>(message.Message);
+                    callback?.Invoke(payload);
+                }
+            }, cancellationToken);
+        }
+
+        public async Task SubscribeAsync(string topic, Action<string> callback, CancellationToken cancellationToken = default)
+        {
+            await _redisPubSub.SubscribeAsync(_channel, (PubSubMessage message) =>
+            {
+                if (message.Topic == topic)
+                {
+                    callback?.Invoke(message.Message);
+                }
+            }, cancellationToken);
         }
 
         #endregion

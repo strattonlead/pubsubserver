@@ -11,5 +11,8 @@ namespace PubSubServer.Client
         Task SubscribeAsync(string topic, Action callback, CancellationToken cancellationToken = default);
         Task SubscribeAsync<T>(string topic, Action<T> callback, CancellationToken cancellationToken = default);
         Task SubscribeAsync(string topic, Action<string> callback, CancellationToken cancellationToken = default);
+        Task SubscribeAsync(string topic, Func<Task> callback, CancellationToken cancellationToken = default);
+        Task SubscribeAsync<T>(string topic, Func<T, Task> callback, CancellationToken cancellationToken = default);
+        Task SubscribeAsync(string topic, Func<string, Task> callback, CancellationToken cancellationToken = default);
     }
 }

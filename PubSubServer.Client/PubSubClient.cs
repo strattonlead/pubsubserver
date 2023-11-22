@@ -71,6 +71,40 @@ namespace PubSubServer.Client
             }, cancellationToken);
         }
 
+        public async Task SubscribeAsync(string topic, Func<Task> callback, CancellationToken cancellationToken = default)
+        {
+            await _redisPubSub.SubscribeAsync(_channel, async (PubSubMessage message) =>
+            {
+                if (message.Topic == topic)
+                {
+                    await callback?.Invoke();
+                }
+            }, cancellationToken);
+        }
+
+        public async Task SubscribeAsync<T>(string topic, Func<T, Task> callback, CancellationToken cancellationToken = default)
+        {
+            await _redisPubSub.SubscribeAsync(_channel, async (PubSubMessage message) =>
+            {
+                if (message.Topic == topic)
+                {
+                    var payload = JsonConvert.DeserializeObject<T>(message.Message);
+                    await callback?.Invoke(payload);
+                }
+            }, cancellationToken);
+        }
+
+        public async Task SubscribeAsync(string topic, Func<string, Task> callback, CancellationToken cancellationToken = default)
+        {
+            await _redisPubSub.SubscribeAsync(_channel, async (PubSubMessage message) =>
+            {
+                if (message.Topic == topic)
+                {
+                    await callback?.Invoke(message.Message);
+                }
+            }, cancellationToken);
+        }
+
         #endregion
     }
 

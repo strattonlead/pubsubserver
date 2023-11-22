@@ -73,6 +73,11 @@ namespace PubSubServer.Redis
             await SubscribeAsync(channel, x => { callback?.Invoke(); }, cancellationToken);
         }
 
+        public async Task SubscribeAsync(string channel, Func<Task> callback, CancellationToken cancellationToken = default)
+        {
+            await SubscribeAsync(channel, async x => { callback?.Invoke(); }, cancellationToken);
+        }
+
         public async Task SubscribeAsync<T>(string channel, Action<T> callback, CancellationToken cancellationToken = default)
         {
             if (_connection == null)
@@ -98,6 +103,31 @@ namespace PubSubServer.Redis
             }, CommandFlags.None);
         }
 
+        public async Task SubscribeAsync<T>(string channel, Func<T, Task> callback, CancellationToken cancellationToken = default)
+        {
+            if (_connection == null)
+            {
+                return;
+            }
+
+            while (!_connection.IsConnected)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            await _pubSub.SubscribeAsync(channel, async (c, value) =>
+            {
+                var stringValue = $"{value}";
+                var result = JsonConvert.DeserializeObject<T>(stringValue);
+                await callback?.Invoke(result);
+            }, CommandFlags.None);
+        }
+
         public async Task SubscribeAsync(string channel, Action<string> callback, CancellationToken cancellationToken = default)
         {
             if (_connection == null)
@@ -119,6 +149,30 @@ namespace PubSubServer.Redis
             {
                 var stringValue = $"{value}";
                 callback?.Invoke($"{value}");
+            }, CommandFlags.None);
+        }
+
+        public async Task SubscribeAsync(string channel, Func<string, Task> callback, CancellationToken cancellationToken = default)
+        {
+            if (_connection == null)
+            {
+                return;
+            }
+
+            while (!_connection.IsConnected)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            await _pubSub.SubscribeAsync(channel, async (c, value) =>
+            {
+                var stringValue = $"{value}";
+                await callback?.Invoke($"{value}");
             }, CommandFlags.None);
         }
 

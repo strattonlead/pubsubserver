@@ -107,13 +107,4 @@ namespace PubSubServer.Client
 
         #endregion
     }
-
-
-    public static class PubSubClientDI
-    {
-        public static void AddPubSubClient(this IServiceCollection services)
-        {
-            services.AddSingleton<IPubSubClient, PubSubClient>();
-        }
-    }
 }

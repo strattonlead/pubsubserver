@@ -53,6 +53,10 @@ namespace PubSubServer.Redis
         public async Task<T> PopAsync<T>(string queueName)
         {
             var redisValue = await PopAsync(queueName);
+            if (redisValue == null)
+            {
+                return default;
+            }
             return JsonConvert.DeserializeObject<T>(redisValue);
         }
 

@@ -65,7 +65,7 @@ namespace PubSubServer.Redis
                 return 0;
             }
 
-            return await _pubSub.PublishAsync(channel, message, CommandFlags.FireAndForget);
+            return await _pubSub.PublishAsync(RedisChannel.Literal(channel), message, CommandFlags.FireAndForget);
         }
 
         public async Task SubscribeAsync(string channel, Action callback, CancellationToken cancellationToken = default)
@@ -75,7 +75,14 @@ namespace PubSubServer.Redis
 
         public async Task SubscribeAsync(string channel, Func<Task> callback, CancellationToken cancellationToken = default)
         {
-            await SubscribeAsync(channel, async x => { callback?.Invoke(); }, cancellationToken);
+            await SubscribeAsync(channel, async x =>
+            {
+                var task = callback?.Invoke();
+                if (task != null)
+                {
+                    await task;
+                }
+            }, cancellationToken);
         }
 
         public async Task SubscribeAsync<T>(string channel, Action<T> callback, CancellationToken cancellationToken = default)
@@ -95,7 +102,7 @@ namespace PubSubServer.Redis
                 return;
             }
 
-            await _pubSub.SubscribeAsync(channel, (c, value) =>
+            await _pubSub.SubscribeAsync(RedisChannel.Literal(channel), (c, value) =>
             {
                 var stringValue = $"{value}";
                 var result = JsonConvert.DeserializeObject<T>(stringValue);
@@ -120,7 +127,7 @@ namespace PubSubServer.Redis
                 return;
             }
 
-            await _pubSub.SubscribeAsync(channel, async (c, value) =>
+            await _pubSub.SubscribeAsync(RedisChannel.Literal(channel), async (c, value) =>
             {
                 var stringValue = $"{value}";
                 var result = JsonConvert.DeserializeObject<T>(stringValue);
@@ -145,7 +152,7 @@ namespace PubSubServer.Redis
                 return;
             }
 
-            await _pubSub.SubscribeAsync(channel, (c, value) =>
+            await _pubSub.SubscribeAsync(RedisChannel.Literal(channel), (c, value) =>
             {
                 var stringValue = $"{value}";
                 callback?.Invoke($"{value}");
@@ -169,7 +176,7 @@ namespace PubSubServer.Redis
                 return;
             }
 
-            await _pubSub.SubscribeAsync(channel, async (c, value) =>
+            await _pubSub.SubscribeAsync(RedisChannel.Literal(channel), async (c, value) =>
             {
                 var stringValue = $"{value}";
                 await callback?.Invoke($"{value}");
@@ -193,7 +200,7 @@ namespace PubSubServer.Redis
                 return;
             }
 
-            await _pubSub.UnsubscribeAsync(channel);
+            await _pubSub.UnsubscribeAsync(RedisChannel.Literal(channel));
         }
 
         public async Task UnsubscribeAllAsync(CancellationToken cancellationToken = default)

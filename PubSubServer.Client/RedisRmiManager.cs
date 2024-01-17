@@ -29,7 +29,7 @@ namespace PubSubServer.Client
 
         #region RedisRmiHandler
 
-        public void RegisterSingletonHandlerAsync<T>(T handler, CancellationToken cancellationToken = default)
+        public async Task RegisterSingletonHandlerAsync<T>(T handler, CancellationToken cancellationToken = default)
         {
             var type = typeof(T);
             if (_registeredHandlers.Contains(type))
@@ -39,7 +39,7 @@ namespace PubSubServer.Client
             _registeredHandlers.Add(type);
 
             var channelName = GetRmiChannelName<T>();
-            _client.SubscribeAsync<MethodCallParams>(channelName, async methodCallParams =>
+            await _client.SubscribeAsync<MethodCallParams>(channelName, async methodCallParams =>
             {
                 try
                 {
@@ -49,7 +49,7 @@ namespace PubSubServer.Client
             }, cancellationToken);
         }
 
-        public void RegisterScopedHandlerAsync<T>(CancellationToken cancellationToken = default)
+        public async Task RegisterScopedHandlerAsync<T>(CancellationToken cancellationToken = default)
         {
             var type = typeof(T);
             if (_registeredHandlers.Contains(type))
@@ -59,18 +59,18 @@ namespace PubSubServer.Client
             _registeredHandlers.Add(type);
 
             var channelName = GetRmiChannelName<T>();
-            _client.SubscribeAsync<MethodCallParams>(channelName, async methodCallParams =>
-            {
-                try
-                {
-                    using (var scope = _serviceScopeFactory.CreateScope())
-                    {
-                        var handler = scope.ServiceProvider.GetRequiredService<T>();
-                        await _handleMethodCallAsync(handler, methodCallParams, cancellationToken);
-                    }
-                }
-                catch { }
-            }, cancellationToken);
+            await _client.SubscribeAsync<MethodCallParams>(channelName, async methodCallParams =>
+             {
+                 try
+                 {
+                     using (var scope = _serviceScopeFactory.CreateScope())
+                     {
+                         var handler = scope.ServiceProvider.GetRequiredService<T>();
+                         await _handleMethodCallAsync(handler, methodCallParams, cancellationToken);
+                     }
+                 }
+                 catch { }
+             }, cancellationToken);
         }
 
         private async Task _handleMethodCallAsync<T>(T handler, MethodCallParams methodCallParams, CancellationToken cancellationToken = default)

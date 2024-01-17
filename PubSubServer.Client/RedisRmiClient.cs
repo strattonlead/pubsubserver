@@ -100,7 +100,7 @@ namespace PubSubServer.Client
             {
                 throw new ArgumentException("Body must be of type MethodCallExpression. e.g. x => x.DoSomething()");
             }
-            return $"{typeof(T).AssemblyQualifiedName}.{body.Method.Name}";
+            return body.Method.Name;
         }
 
         private string _getMethodName<TResult>(Expression<Func<T, TResult>> expression)
@@ -110,7 +110,7 @@ namespace PubSubServer.Client
             {
                 throw new ArgumentException("Body must be of type MethodCallExpression. e.g. x => x.DoSomething()");
             }
-            return $"{typeof(T).AssemblyQualifiedName}.{body.Method.Name}";
+            return body.Method.Name;
         }
 
         private object[] _getMethodParameters<TResult>(Expression<Func<T, TResult>> expression)

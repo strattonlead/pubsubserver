@@ -5,8 +5,8 @@
 	<ImplicitUsings>disable</ImplicitUsings>
 	<Nullable>disable</Nullable>
 	  <PackageId>CreateIf.PubSubServer.Client</PackageId>
-	  <Version>1.0.12</Version>
-	  <PackageVersion>1.0.12</PackageVersion>
+	  <Version>1.0.13</Version>
+	  <PackageVersion>1.0.13</PackageVersion>
 	  <Authors>Arndt Bieberstein</Authors>
 	  <Company>createIF Labs GmbH</Company>
 	  <EnablePackageValidation>true</EnablePackageValidation>
@@ -26,6 +26,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+	  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.4" />
 	  <PackageReference Include="StackExchange.Redis" Version="2.6.122" />
 	<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
 	  <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
@@ -39,8 +40,8 @@
   </ItemGroup>
 
 	<ItemGroup>
-		<None Include="icon.png" Pack="true" PackagePath=""/>
-		<None Include="README.md" Pack="true" PackagePath=""/>
+		<None Include="icon.png" Pack="true" PackagePath="" />
+		<None Include="README.md" Pack="true" PackagePath="" />
 	</ItemGroup>
 
 </Project>

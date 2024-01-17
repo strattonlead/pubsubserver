@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,16 +15,18 @@ namespace PubSubServer.Client
 
         private readonly IPubSubClient _client;
         private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly ILogger _logger;
         private List<Type> _registeredHandlers = new List<Type>();
 
         #endregion
 
         #region Constructor
 
-        public RedisRmiManager(IPubSubClient pubSubClient, IServiceScopeFactory serviceScopeFactory)
+        public RedisRmiManager(IPubSubClient pubSubClient, IServiceScopeFactory serviceScopeFactory, ILogger<RedisRmiManager> logger)
         {
             _client = pubSubClient;
             _serviceScopeFactory = serviceScopeFactory;
+            _logger = logger;
         }
 
         #endregion
@@ -39,13 +43,18 @@ namespace PubSubServer.Client
             _registeredHandlers.Add(type);
 
             var channelName = GetRmiChannelName<T>();
+            _logger.LogInformation($"Subscribe with handler {type.Name} on channel {channelName}");
             await _client.SubscribeAsync<MethodCallParams>(channelName, async methodCallParams =>
             {
+                _logger.LogInformation($"Handle on channel {channelName}");
                 try
                 {
                     await _handleMethodCallAsync(handler, methodCallParams, cancellationToken);
                 }
-                catch { }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, $"Error in RedisRmiManager. Handler Type: {type.Name} Parameters: {JsonConvert.SerializeObject(methodCallParams)}");
+                }
             }, cancellationToken);
         }
 
@@ -59,8 +68,10 @@ namespace PubSubServer.Client
             _registeredHandlers.Add(type);
 
             var channelName = GetRmiChannelName<T>();
+            _logger.LogInformation($"Subscribe with handler {type.Name} on channel {channelName}");
             await _client.SubscribeAsync<MethodCallParams>(channelName, async methodCallParams =>
              {
+                 _logger.LogInformation($"handle on channel {channelName}");
                  try
                  {
                      using (var scope = _serviceScopeFactory.CreateScope())
@@ -69,7 +80,10 @@ namespace PubSubServer.Client
                          await _handleMethodCallAsync(handler, methodCallParams, cancellationToken);
                      }
                  }
-                 catch { }
+                 catch (Exception e)
+                 {
+                     _logger.LogError(e, $"Error in RedisRmiManager. Handler Type: {type.Name} Parameters: {JsonConvert.SerializeObject(methodCallParams)}");
+                 }
              }, cancellationToken);
         }
 
@@ -103,6 +117,8 @@ namespace PubSubServer.Client
 
             if (methodCallParams.CallbackId != null)
             {
+                var type = typeof(T);
+                _logger.LogInformation($"Publish with handler {type.Name} on callback channel {methodCallParams.CallbackId}");
                 await _client.PublishAsync(methodCallParams.CallbackId, result, cancellationToken);
             }
         }

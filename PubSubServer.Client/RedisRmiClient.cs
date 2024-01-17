@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -11,15 +12,17 @@ namespace PubSubServer.Client
         #region Properties
 
         private readonly IPubSubClient _client;
+        private readonly ILogger _logger;
         public string RmiChannelName => $"CallFrom_RedisRmiClient<{typeof(T).AssemblyQualifiedName}>";
 
         #endregion
 
         #region Constructor
 
-        public RedisRmiClient(IPubSubClient pubSubClient)
+        public RedisRmiClient(IPubSubClient pubSubClient, ILogger<RedisRmiClient<T>> logger)
         {
             _client = pubSubClient;
+            _logger = logger;
         }
 
         #endregion
@@ -41,6 +44,7 @@ namespace PubSubServer.Client
             }, cancellationToken);
 
             var methodCallParams = _getMethodCallParams(expression, id);
+            _logger.LogInformation($"Publish on channel {RmiChannelName} with callback {methodCallParams.CallbackId}");
             await _client.PublishAsync(RmiChannelName, methodCallParams, cancellationToken);
 
             if (timeout.HasValue)
@@ -70,6 +74,7 @@ namespace PubSubServer.Client
             }, cancellationToken);
 
             var methodCallParams = _getMethodCallParams(expression, id);
+            _logger.LogInformation($"Publish on channel {RmiChannelName} with callback {methodCallParams.CallbackId}");
             await _client.PublishAsync(RmiChannelName, methodCallParams, cancellationToken);
 
             if (timeout.HasValue)

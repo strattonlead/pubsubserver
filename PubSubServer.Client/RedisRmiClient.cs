@@ -71,6 +71,7 @@ namespace PubSubServer.Client
             {
                 result = response;
                 resetEvent.Set();
+                return Task.CompletedTask;
             }, cancellationToken);
 
             var methodCallParams = _getMethodCallParams(expression, id);
@@ -185,15 +186,5 @@ namespace PubSubServer.Client
         public string CallbackId { get; set; }
         public string MethodName { get; set; }
         public object[] Params { get; set; }
-    }
-
-    public interface ITest
-    {
-        string Add(int a, long b);
-    }
-
-    public static class RedisRmiClientHelper
-    {
-
     }
 }

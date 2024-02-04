@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -36,11 +37,12 @@ namespace PubSubServer.Client
 
         public async Task InvokeAsync(Expression<Action<T>> expression, TimeSpan? timeout, CancellationToken cancellationToken = default)
         {
-            var cancellationTokenSource = new CancellationTokenSource();
+            var resetEvent = new ManualResetEvent(false);
+            resetEvent.Reset();
             var id = Guid.NewGuid().ToString();
             await _client.SubscribeAsync(id, () =>
             {
-                cancellationTokenSource.Cancel();
+                resetEvent.Set();
             }, cancellationToken);
 
             var methodCallParams = _getMethodCallParams(expression, id);
@@ -49,11 +51,11 @@ namespace PubSubServer.Client
 
             if (timeout.HasValue)
             {
-                await Task.Delay(timeout.Value, cancellationTokenSource.Token);
+                resetEvent.WaitOne(timeout.Value);
             }
             else
             {
-                await Task.Delay(TimeSpan.FromHours(1), cancellationTokenSource.Token);
+                resetEvent.WaitOne();
             }
         }
 
@@ -64,13 +66,14 @@ namespace PubSubServer.Client
 
         public async Task<TResult> InvokeAsync<TResult>(Expression<Func<T, TResult>> expression, TimeSpan? timeout, CancellationToken cancellationToken = default)
         {
+            var resetEvent = new ManualResetEvent(false);
+            resetEvent.Reset();
             var id = Guid.NewGuid().ToString();
             TResult result = default;
-            var cancellationTokenSource = new CancellationTokenSource();
             await _client.SubscribeAsync<TResult>(id, response =>
             {
                 result = response;
-                cancellationTokenSource.Cancel();
+                resetEvent.Set();
                 return Task.CompletedTask;
             }, cancellationToken);
 
@@ -80,14 +83,48 @@ namespace PubSubServer.Client
 
             if (timeout.HasValue)
             {
-                await Task.Delay(timeout.Value, cancellationTokenSource.Token);
+                resetEvent.WaitOne(timeout.Value);
             }
             else
             {
-                await Task.Delay(TimeSpan.FromHours(1), cancellationTokenSource.Token);
+                resetEvent.WaitOne();
             }
 
             return result;
+        }
+
+        public async Task<TResult[]> InvokeManyAsync<TResult>(Expression<Func<T, TResult>> expression, int? minCount, TimeSpan? timeout, CancellationToken cancellationToken = default)
+        {
+            var resetEvent = new ManualResetEvent(false);
+            resetEvent.Reset();
+            var id = Guid.NewGuid().ToString();
+            List<TResult> results = default;
+            var resultCount = 0;
+            await _client.SubscribeAsync<TResult>(id, response =>
+            {
+                results.Add(response);
+                resultCount++;
+                if (minCount.HasValue && resultCount >= minCount.Value)
+                {
+                    resetEvent.Set();
+                }
+                return Task.CompletedTask;
+            }, cancellationToken);
+
+            var methodCallParams = _getMethodCallParams(expression, id);
+            _logger.LogInformation($"Publish on channel {RmiChannelName} with callback {methodCallParams.CallbackId}");
+            await _client.PublishAsync(RmiChannelName, methodCallParams, cancellationToken);
+
+            if (timeout.HasValue)
+            {
+                await Task.Delay(timeout.Value, cancellationToken);
+            }
+            else if (minCount.HasValue)
+            {
+                resetEvent.WaitOne();
+            }
+
+            return results.ToArray();
         }
 
         #endregion

@@ -14,5 +14,6 @@ namespace PubSubServer.Client
         Task<TResult> InvokeAsync<TResult>(Expression<Func<T, TResult>> expression, CancellationToken cancellationToken = default);
 
         Task<TResult> InvokeAsync<TResult>(Expression<Func<T, TResult>> expression, TimeSpan? timeout, CancellationToken cancellationToken = default);
+        Task<TResult[]> InvokeManyAsync<TResult>(Expression<Func<T, TResult>> expression, int? minCount, TimeSpan? timeout, CancellationToken cancellationToken = default);
     }
 }

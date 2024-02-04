@@ -98,7 +98,7 @@ namespace PubSubServer.Client
             var resetEvent = new ManualResetEvent(false);
             resetEvent.Reset();
             var id = Guid.NewGuid().ToString();
-            List<TResult> results = default;
+            List<TResult> results = new List<TResult>();
             var resultCount = 0;
             await _client.SubscribeAsync<TResult>(id, response =>
             {

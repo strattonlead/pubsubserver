@@ -36,11 +36,11 @@ namespace PubSubServer.Client
 
         public async Task InvokeAsync(Expression<Action<T>> expression, TimeSpan? timeout, CancellationToken cancellationToken = default)
         {
-            var resetEvent = new ManualResetEvent(false);
+            var cancellationTokenSource = new CancellationTokenSource();
             var id = Guid.NewGuid().ToString();
             await _client.SubscribeAsync(id, () =>
             {
-                resetEvent.Set();
+                cancellationTokenSource.Cancel();
             }, cancellationToken);
 
             var methodCallParams = _getMethodCallParams(expression, id);
@@ -49,11 +49,11 @@ namespace PubSubServer.Client
 
             if (timeout.HasValue)
             {
-                resetEvent.WaitOne(timeout.Value);
+                await Task.Delay(timeout.Value, cancellationTokenSource.Token);
             }
             else
             {
-                resetEvent.WaitOne();
+                await Task.Delay(TimeSpan.FromHours(1), cancellationTokenSource.Token);
             }
         }
 
@@ -64,13 +64,13 @@ namespace PubSubServer.Client
 
         public async Task<TResult> InvokeAsync<TResult>(Expression<Func<T, TResult>> expression, TimeSpan? timeout, CancellationToken cancellationToken = default)
         {
-            var resetEvent = new ManualResetEvent(false);
             var id = Guid.NewGuid().ToString();
             TResult result = default;
+            var cancellationTokenSource = new CancellationTokenSource();
             await _client.SubscribeAsync<TResult>(id, response =>
             {
                 result = response;
-                resetEvent.Set();
+                cancellationTokenSource.Cancel();
                 return Task.CompletedTask;
             }, cancellationToken);
 
@@ -80,11 +80,11 @@ namespace PubSubServer.Client
 
             if (timeout.HasValue)
             {
-                resetEvent.WaitOne(timeout.Value);
+                await Task.Delay(timeout.Value, cancellationTokenSource.Token);
             }
             else
             {
-                resetEvent.WaitOne();
+                await Task.Delay(TimeSpan.FromHours(1), cancellationTokenSource.Token);
             }
 
             return result;
